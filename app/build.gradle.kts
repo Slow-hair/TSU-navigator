@@ -56,4 +56,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("org.osmdroid:osmdroid-mapsforge:6.1.18")
+    implementation("org.mapsforge:mapsforge-map:0.19.0")
+    implementation("org.mapsforge:mapsforge-map-android:0.19.0")
 }
