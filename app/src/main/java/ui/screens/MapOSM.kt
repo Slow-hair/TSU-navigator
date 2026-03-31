@@ -15,6 +15,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
 import kotlin.math.*
+import org.osmdroid.util.BoundingBox
 
 @Composable
 fun Grid() {
@@ -30,6 +31,15 @@ fun Grid() {
             setTileSource(TileSourceFactory.MAPNIK)
             setBuiltInZoomControls(true)
             setMultiTouchControls(true)
+            val bounds = BoundingBox(
+                56.4746400,
+                84.9585000,
+                56.4631200,
+                84.9387400
+            )
+            setScrollableAreaLimitDouble(bounds)
+            minZoomLevel = 16.0
+            maxZoomLevel = 19.0
             controller.setZoom(17.0)
             controller.setCenter(GeoPoint(56.466, 84.948))
         }
@@ -84,7 +94,7 @@ fun Grid() {
         }
     }
 
-    mapView.overlays.add(fixedGridOverlay)
+    //mapView.overlays.add(fixedGridOverlay)
 
     AndroidView(
         factory = { mapView },
