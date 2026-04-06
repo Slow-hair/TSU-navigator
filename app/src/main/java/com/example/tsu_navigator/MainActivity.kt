@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import com.example.tsu_navigator.ui.screens.Grid
+import ui.screens.Grid
 import com.example.tsu_navigator.ui.theme.TSUNavigatorTheme
 
 class MainActivity : ComponentActivity() {
