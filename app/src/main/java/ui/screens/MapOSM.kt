@@ -4,10 +4,16 @@ package ui.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.view.MotionEvent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import android.view.View
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +32,13 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import kotlin.math.*
+import androidx.compose.material3.Text
+import org.osmdroid.views.overlay.Marker
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color as ComposeColor
+
+enum class SelectionMode { NONE, START, FINISH }
 
 @Composable
 fun Grid() {
@@ -35,6 +48,10 @@ fun Grid() {
     var gridRows by remember { mutableIntStateOf(0) }
     var gridCols by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
+
+    var startPoint by remember { mutableStateOf<GeoPoint?>(null) }
+    var endPoint by remember { mutableStateOf<GeoPoint?>(null) }
+    var selectionMode by remember { mutableStateOf(SelectionMode.NONE) }
 
     val south = 56.4631200
     val west = 84.9387400
@@ -67,8 +84,48 @@ fun Grid() {
             south = south,
             west = west,
             north = north,
-            east = east
+            east = east,
+            startPoint = startPoint,
+            endPoint = endPoint,
+            onStartPointChange = { startPoint = it },
+            onEndPointChange = { endPoint = it },
+            selectionMode = selectionMode,
+            onSelectionModeChange = { selectionMode = it }
         )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 8.dp, bottom = 10.dp)
+        ) {
+            Button(
+                onClick = { selectionMode = SelectionMode.START },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.DarkGray
+                ),modifier = Modifier.width(90.dp)
+
+            ) {
+                Text("Старт", fontSize = 10.sp)
+            }
+            Spacer(modifier = Modifier.width(5.dp))
+            Button(
+                onClick = { selectionMode = SelectionMode.FINISH },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.DarkGray
+                ),modifier = Modifier.width(90.dp)
+            ) {
+                Text("Финиш", fontSize = 10.sp)
+            }
+            Spacer(modifier = Modifier.width(5.dp))
+            Button(
+                onClick = {
+                    startPoint = null
+                    endPoint = null
+                    selectionMode = SelectionMode.NONE
+                },modifier = Modifier.width(90.dp)
+            ) {
+                Text("Сброс", fontSize = 10.sp)
+            }
+        }
     }
 }
 
@@ -90,6 +147,18 @@ private fun loadGridFromAssets(context: Context): Array<IntArray>? {
     }
 }
 
+private fun createCircleMarker(context: Context, color: Int): Drawable {
+    val size = (20 * context.resources.displayMetrics.density).toInt()
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+    return BitmapDrawable(context.resources, bitmap)
+}
+
 @SuppressLint("ClickableViewAccessibility")
 @Composable
 fun MapViewWithGrid(
@@ -100,7 +169,13 @@ fun MapViewWithGrid(
     south: Double,
     west: Double,
     north: Double,
-    east: Double
+    east: Double,
+    startPoint: GeoPoint?,
+    endPoint: GeoPoint?,
+    onStartPointChange: (GeoPoint?) -> Unit,
+    onEndPointChange: (GeoPoint?) -> Unit,
+    selectionMode: SelectionMode,
+    onSelectionModeChange: (SelectionMode) -> Unit
 ) {
     Configuration.getInstance().load(
         context,
@@ -110,7 +185,7 @@ fun MapViewWithGrid(
     val mapView = remember {
         MapView(context).apply {
             setTileSource(TileSourceFactory.MAPNIK)
-            setBuiltInZoomControls(true)
+            setBuiltInZoomControls(false)
             setMultiTouchControls(true)
             val bounds = BoundingBox(north, east, south, west)
             setScrollableAreaLimitDouble(bounds)
@@ -120,9 +195,6 @@ fun MapViewWithGrid(
             controller.setCenter(GeoPoint(56.466, 84.948))
         }
     }
-
-    var startPoint by remember { mutableStateOf<GeoPoint?>(null) }
-    var endPoint by remember { mutableStateOf<GeoPoint?>(null) }
 
     fun geoToIndex(lat: Double, lon: Double): Point? {
         if (gridRows == 0 || gridCols == 0) return null
@@ -154,19 +226,22 @@ fun MapViewWithGrid(
     }
 
     fun buildAndShowRoute() {
-        if (navigationGrid == null || startPoint == null || endPoint == null) {
-            println("Данные не готовы")
+        val grid = navigationGrid
+        val start = startPoint
+        val end = endPoint
+        if (grid == null || start == null || end == null) {
+            println("buildAndShowRoute: данные не готовы")
             return
         }
-        val startIdxRaw = geoToIndex(startPoint!!.latitude, startPoint!!.longitude) ?: return
-        val endIdxRaw = geoToIndex(endPoint!!.latitude, endPoint!!.longitude) ?: return
+        val startIdxRaw = geoToIndex(start.latitude, start.longitude) ?: return
+        val endIdxRaw = geoToIndex(end.latitude, end.longitude) ?: return
 
-        val startIdx = if (navigationGrid[startIdxRaw.y][startIdxRaw.x] == 1) startIdxRaw
-        else findNearestWalkable(navigationGrid, startIdxRaw.x, startIdxRaw.y)
-        val endIdx = if (navigationGrid[endIdxRaw.y][endIdxRaw.x] == 1) endIdxRaw
-        else findNearestWalkable(navigationGrid, endIdxRaw.x, endIdxRaw.y)
+        val startIdx = if (grid[startIdxRaw.y][startIdxRaw.x] == 1) startIdxRaw
+        else findNearestWalkable(grid, startIdxRaw.x, startIdxRaw.y)
+        val endIdx = if (grid[endIdxRaw.y][endIdxRaw.x] == 1) endIdxRaw
+        else findNearestWalkable(grid, endIdxRaw.x, endIdxRaw.y)
 
-        val pathIndices = findPath(navigationGrid, startIdx, endIdx)
+        val pathIndices = findPath(grid, startIdx, endIdx)
         if (pathIndices == null) {
             println("Путь не найден")
             return
@@ -178,47 +253,96 @@ fun MapViewWithGrid(
         mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Polyline>())
         val polyline = Polyline().apply {
             setPoints(geoPath)
-            outlinePaint.color = Color.BLUE
+            outlinePaint.color = android.graphics.Color.BLUE
             outlinePaint.strokeWidth = 8f
         }
         mapView.overlays.add(polyline)
         mapView.invalidate()
-
-        startPoint = null
-        endPoint = null
     }
 
-    mapView.setOnTouchListener { _, event ->
+    fun updateMarkers() {
+        mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Marker>())
+        startPoint?.let {
+            Marker(mapView).apply {
+                position = it
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = "Старт"
+                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 150, 255))
+                mapView.overlays.add(this)
+            }
+        }
+        endPoint?.let {
+            Marker(mapView).apply {
+                position = it
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = "Финиш"
+                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 200, 0))
+                mapView.overlays.add(this)
+            }
+        }
+        mapView.invalidate()
+    }
+
+    LaunchedEffect(startPoint, endPoint) {
+        updateMarkers()
+        if (startPoint != null && endPoint != null) {
+            buildAndShowRoute()
+        }else {
+            mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Polyline>())
+            mapView.invalidate()
+        }
+    }
+
+    mapView.setOnTouchListener { _: View?, event: MotionEvent ->
         if (event.action == MotionEvent.ACTION_UP) {
             val proj = mapView.projection
             val geoPoint = proj.fromPixels(event.x.toInt(), event.y.toInt()) as GeoPoint
             println("Клик ${geoPoint.latitude}, ${geoPoint.longitude}")
-            when {
-                startPoint == null -> {
-                    startPoint = geoPoint
+            when (selectionMode) {
+                SelectionMode.START -> {
+                    onStartPointChange(geoPoint)
+                    onSelectionModeChange(SelectionMode.NONE)
                     mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Polyline>())
                     mapView.invalidate()
                     mapView.performClick()
                 }
-                endPoint == null -> {
-                    endPoint = geoPoint
-                    buildAndShowRoute()
+                SelectionMode.FINISH -> {
+                    onEndPointChange(geoPoint)
+                    onSelectionModeChange(SelectionMode.NONE)
                     mapView.performClick()
                 }
-                else -> {
-                    startPoint = geoPoint
-                    endPoint = null
-                    mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Polyline>())
-                    mapView.invalidate()
-                    mapView.performClick()
-                }
+                SelectionMode.NONE -> { }
             }
         }
         false
     }
-
-    AndroidView(
-        factory = { mapView },
-        modifier = Modifier.fillMaxSize()
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { mapView },
+            modifier = Modifier.fillMaxSize()
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 16.dp)
+        ) {
+            Button(
+                onClick = { mapView.controller.zoomIn() },
+                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor.DarkGray),
+                modifier = Modifier.size(48.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text("+", fontSize = 24.sp)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { mapView.controller.zoomOut() },
+                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor.DarkGray),
+                modifier = Modifier.size(48.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text("-", fontSize = 24.sp)
+            }
+        }
+    }
 }
