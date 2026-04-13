@@ -37,11 +37,12 @@ import org.osmdroid.views.overlay.Marker
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color as ComposeColor
-
+import com.example.tsu_navigator.EatPlace
+import com.example.tsu_navigator.EatPlacesData
 enum class SelectionMode { NONE, START, FINISH }
 
 @Composable
-fun Grid() {
+fun Grid(selectedPlace: EatPlace? = null) {
     val context = LocalContext.current
 
     var navigationGrid by remember { mutableStateOf<Array<IntArray>?>(null) }
@@ -90,7 +91,8 @@ fun Grid() {
             onStartPointChange = { startPoint = it },
             onEndPointChange = { endPoint = it },
             selectionMode = selectionMode,
-            onSelectionModeChange = { selectionMode = it }
+            onSelectionModeChange = { selectionMode = it },
+            selectedPlace = selectedPlace
         )
         Row(
             modifier = Modifier
@@ -175,7 +177,8 @@ fun MapViewWithGrid(
     onStartPointChange: (GeoPoint?) -> Unit,
     onEndPointChange: (GeoPoint?) -> Unit,
     selectionMode: SelectionMode,
-    onSelectionModeChange: (SelectionMode) -> Unit
+    onSelectionModeChange: (SelectionMode) -> Unit,
+    selectedPlace: EatPlace? = null
 ) {
     Configuration.getInstance().load(
         context,
@@ -195,7 +198,28 @@ fun MapViewWithGrid(
             controller.setCenter(GeoPoint(56.466, 84.948))
         }
     }
+    LaunchedEffect(selectedPlace) {
+        if (selectedPlace != null) {
+            mapView.controller.animateTo(GeoPoint(
+                selectedPlace.latitude,
+                selectedPlace.longitude
+            ))
+            mapView.controller.setZoom(18.0)
 
+            val oldMarkers = mapView.overlays.filter { it is Marker && it.title != "Старт" && it.title != "Финиш" }
+            mapView.overlays.removeAll(oldMarkers)
+
+            val marker = Marker(mapView).apply {
+                position = GeoPoint(selectedPlace.latitude, selectedPlace.longitude)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = selectedPlace.name
+                subDescription = selectedPlace.cuisine ?: ""
+                icon = createCircleMarker(context, android.graphics.Color.RED)
+            }
+            mapView.overlays.add(marker)
+            mapView.invalidate()
+        }
+    }
     fun geoToIndex(lat: Double, lon: Double): Point? {
         if (gridRows == 0 || gridCols == 0) return null
         val x = ((lon - west) / (east - west) * gridCols).toInt().coerceIn(0, gridCols - 1)

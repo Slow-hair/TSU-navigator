@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import ui.screens.Grid
+import com.example.tsu_navigator.ui.screens.WhereEatScreen
 import com.example.tsu_navigator.ui.theme.TSUNavigatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,8 +38,8 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun TSUNavigatorApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.MAP) }
+    var selectedPlace by rememberSaveable { mutableStateOf<EatPlace?>(null) }
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
@@ -58,15 +59,19 @@ fun TSUNavigatorApp() {
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (currentDestination) {
-                AppDestinations.HOME -> Grid()
-                AppDestinations.FAVORITES -> Greeting(
-                    name = "Избранное",
-                    modifier = Modifier.padding(innerPadding)
-                )
-                AppDestinations.PROFILE -> Greeting(
-                    name = "Профиль",
-                    modifier = Modifier.padding(innerPadding)
-                )
+                AppDestinations.MAP -> {
+                    Grid(selectedPlace = selectedPlace)
+                }
+                AppDestinations.EAT -> {
+                    WhereEatScreen(
+                        onPlaceSelected = { place ->
+                            selectedPlace = place
+                            currentDestination = AppDestinations.MAP
+                        },
+                        onBack = { currentDestination = AppDestinations.MAP }
+                    )
+                }
+                AppDestinations.PROFILE -> Greeting("Профиль")
             }
         }
     }
@@ -76,8 +81,8 @@ enum class AppDestinations(
     val label: String,
     val icon: Int,
 ) {
-    HOME("Карта", R.drawable.ic_home),
-    FAVORITES("Избранное", R.drawable.ic_favorite),
+    MAP("Карта", R.drawable.ic_home),
+    EAT("Где поесть", R.drawable.ic_favorite),
     PROFILE("Профиль", R.drawable.ic_account_box),
 }
 
