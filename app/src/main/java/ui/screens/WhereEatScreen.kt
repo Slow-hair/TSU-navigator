@@ -11,15 +11,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.geometry.Offset
 import com.example.tsu_navigator.EatPlace
 import com.example.tsu_navigator.EatPlacesData
 import com.example.tsu_navigator.PlaceType
+import com.example.tsu_navigator.RatingRepository
+import com.example.tsu_navigator.ml.AIClassifier
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -138,7 +141,9 @@ fun WhereEatScreen(
             RatingDrawerContent(
                 placeName = ratingTargetPlace!!.name,
                 onConfirm = { rating ->
-                    println("Оценка для ${ratingTargetPlace!!.name}: $rating")
+                    ratingTargetPlace?.let { place ->
+                        RatingRepository.addRating(place.id, rating)
+                    }
                     ratingTargetPlace = null
                 },
                 onCancel = { ratingTargetPlace = null }
@@ -150,6 +155,8 @@ fun WhereEatScreen(
 @Composable
 fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
     val isOpen = remember(place.workingHours) { isOpenNow(place.workingHours) }
+    val avgRating = RatingRepository.getAverageRating(place.id)
+    val ratingCount = RatingRepository.getRatingCount(place.id)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -203,7 +210,17 @@ fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("★", color = Color(0xFFFFD700), fontSize = 18.sp)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("200 хе)", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (ratingCount > 0) String.format("%.1f", avgRating) else "0.0",
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (ratingCount > 0) {
+                        Text(
+                            text = " ($ratingCount)",
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
                 Row {
@@ -232,8 +249,12 @@ fun RatingDrawerContent(
     onConfirm: (Int) -> Unit,
     onCancel: () -> Unit
 ) {
+    val context = LocalContext.current
+    val aiClassifier = remember { AIClassifier(context) }
     val gridSize = 5
     val pixels = remember { Array(gridSize) { BooleanArray(gridSize) } }
+
+    var recognizedDigit by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -253,7 +274,7 @@ fun RatingDrawerContent(
 
         Box(
             modifier = Modifier
-                .size(280.dp)
+                .size(300.dp)
                 .background(Color.LightGray)
                 .pointerInput(Unit) {
                     detectDragGestures { change, _ ->
@@ -278,16 +299,16 @@ fun RatingDrawerContent(
                         }
                     }
                 }
-                for (i in 0..gridSize) {
+                for (i in 1 until gridSize) {
                     val coord = i * cellSize
                     drawLine(
-                        color = Color.Gray,
+                        color = Color.Black,
                         start = Offset(coord, 0f),
                         end = Offset(coord, size.height),
                         strokeWidth = 2f
                     )
                     drawLine(
-                        color = Color.Gray,
+                        color = Color.Black,
                         start = Offset(0f, coord),
                         end = Offset(size.width, coord),
                         strokeWidth = 2f
@@ -298,29 +319,58 @@ fun RatingDrawerContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    for (row in 0 until gridSize) {
-                        for (col in 0 until gridSize) {
-                            pixels[row][col] = false
+        if (recognizedDigit == null) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        for (row in 0 until gridSize) {
+                            for (col in 0 until gridSize) {
+                                pixels[row][col] = false
+                            }
                         }
                     }
+                ) {
+                    Text("Очистить")
                 }
-            ) {
-                Text("Очистить")
+                Button(
+                    onClick = {
+                        val predicted = aiClassifier.predict(pixels)
+                        recognizedDigit = predicted
+                    }
+                ) {
+                    Text("Распознать")
+                }
             }
-
-            Button(
-                onClick = {
-                    val flatPixels = pixels.flatMap { it.toList() }.map { if (it) 1 else 0 }
-                    println("пиксели: ${flatPixels.joinToString("")}")
-                    onConfirm(200)
-                }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Распознать")
+                Text(
+                    text = "Распознанная цифра: $recognizedDigit",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            onConfirm(recognizedDigit!!)
+                            recognizedDigit = null
+                        }
+                    ) {
+                        Text("Подтвердить")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            recognizedDigit = null
+                        }
+                    ) {
+                        Text("Изменить")
+                    }
+                }
             }
         }
 

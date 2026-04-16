@@ -1,6 +1,7 @@
 package com.example.tsu_navigator
 
-import com.example.tsu_navigator.EatPlace
+import android.content.Context
+import android.content.SharedPreferences
 
 enum class PlaceType {
     CAFE,
@@ -54,7 +55,7 @@ object EatPlacesData {
         EatPlace("31", "Безумно", PlaceType.CAFE, 56.471438, 84.941142, "Шаурма", 2, "10:00-22:00"),
         EatPlace("32", "Батина шаурма", PlaceType.CAFE, 56.471173, 84.941368, "Шаурма", 2, "10:00-23:00"),
         EatPlace("33", "Точка", PlaceType.CAFE, 56.471438, 84.941142, "Кофеек", 2, "09:00-20:00"),
-        EatPlace("34", "Буфет в 4 корпсе", PlaceType.CANTEEN, 56.470148, 84.942673, "Купить на перекус", 2, "10:00-17:00"),
+        EatPlace("34", "Буфет в 4 корпусе", PlaceType.CANTEEN, 56.470148, 84.942673, "Купить на перекус", 2, "10:00-17:00"),
         EatPlace("35", "Абрикос", PlaceType.SHOP, 56.471457, 84.941113, "Продукты", 2, "08:00-23:00"),
         EatPlace("36", "Пилад", PlaceType.SHOP, 56.472113, 84.943253, "Продукты", 2, "00:00-23:59"),
         EatPlace("37", "Красное и белое", PlaceType.SHOP, 56.473679, 84.943559, "Продукты, ну и вы сами поняли", 2, "10:00-22:05"),
@@ -64,4 +65,38 @@ object EatPlacesData {
         EatPlace("41", "Наш", PlaceType.SHOP, 56.471485, 84.953657, "Продукты", 2, "00:00-23:59"),
         EatPlace("42", "Ярче на Советской", PlaceType.SHOP, 56.471477, 84.953704, "Продукты", 2, "08:00-22:00"),
     )
+}
+
+object RatingRepository {
+    private const val PREFS_NAME = "ratings"
+    private lateinit var prefs: SharedPreferences
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun addRating(placeId: String, rating: Int) {
+        if (rating !in 0..9) return
+        val sumKey = "${placeId}_sum"
+        val countKey = "${placeId}_count"
+        val currentSum = prefs.getFloat(sumKey, 0f)
+        val currentCount = prefs.getInt(countKey, 0)
+        prefs.edit()
+            .putFloat(sumKey, currentSum + rating)
+            .putInt(countKey, currentCount + 1)
+            .apply()
+    }
+
+    fun getAverageRating(placeId: String): Float {
+        val count = prefs.getInt("${placeId}_count", 0)
+        return if (count > 0) prefs.getFloat("${placeId}_sum", 0f) / count else 0f
+    }
+
+    fun getRatingCount(placeId: String): Int {
+        return prefs.getInt("${placeId}_count", 0)
+    }
+
+    fun resetAllRatings() {
+        prefs.edit().clear().apply()
+    }
 }

@@ -28,6 +28,7 @@ import com.example.tsu_navigator.ui.screens.CoworkingSpace
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RatingRepository.init(this)
         enableEdgeToEdge()
         setContent {
             TSUNavigatorTheme {
