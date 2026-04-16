@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color as ComposeColor
 import com.example.tsu_navigator.EatPlace
 import com.example.tsu_navigator.EatPlacesData
+import kotlinx.coroutines.delay
 enum class SelectionMode { NONE, START, FINISH }
 
 @Composable
@@ -150,14 +151,23 @@ private fun loadGridFromAssets(context: Context): Array<IntArray>? {
 }
 
 private fun createCircleMarker(context: Context, color: Int): Drawable {
-    val size = (20 * context.resources.displayMetrics.density).toInt()
+    val size = (30 * context.resources.displayMetrics.density).toInt()
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+
+    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color
         style = Paint.Style.FILL
     }
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f, fillPaint)
+
+    val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f, strokePaint)
+
     return BitmapDrawable(context.resources, bitmap)
 }
 
@@ -198,26 +208,33 @@ fun MapViewWithGrid(
             controller.setCenter(GeoPoint(56.466, 84.948))
         }
     }
+
     LaunchedEffect(selectedPlace) {
+        println("selectedPlace: $selectedPlace")
         if (selectedPlace != null) {
+            delay(500)
+            val oldPlaceMarker = mapView.overlays.filter {
+                it is Marker && it.title != "Старт" && it.title != "Финиш"
+            }
+            mapView.overlays.removeAll(oldPlaceMarker)
+
             mapView.controller.animateTo(GeoPoint(
                 selectedPlace.latitude,
                 selectedPlace.longitude
             ))
-            mapView.controller.setZoom(18.0)
-
-            val oldMarkers = mapView.overlays.filter { it is Marker && it.title != "Старт" && it.title != "Финиш" }
-            mapView.overlays.removeAll(oldMarkers)
+            mapView.controller.setZoom(20.0)
 
             val marker = Marker(mapView).apply {
                 position = GeoPoint(selectedPlace.latitude, selectedPlace.longitude)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = selectedPlace.name
-                subDescription = selectedPlace.cuisine ?: ""
+                subDescription = "🕐 ${selectedPlace.workingHours}"
                 icon = createCircleMarker(context, android.graphics.Color.RED)
+                showInfoWindow()
             }
             mapView.overlays.add(marker)
             mapView.invalidate()
+            println("маркери ${mapView.overlays.size}")
         }
     }
     fun geoToIndex(lat: Double, lon: Double): Point? {
@@ -254,7 +271,7 @@ fun MapViewWithGrid(
         val start = startPoint
         val end = endPoint
         if (grid == null || start == null || end == null) {
-            println("buildAndShowRoute: данные не готовы")
+            println("данные не готовы")
             return
         }
         val startIdxRaw = geoToIndex(start.latitude, start.longitude) ?: return
