@@ -103,7 +103,7 @@ fun Grid(selectedPlace: EatPlace? = null) {
             Button(
                 onClick = { selectionMode = SelectionMode.START },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.DarkGray
+                    containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.Gray
                 ),modifier = Modifier.width(90.dp)
 
             ) {
@@ -113,7 +113,7 @@ fun Grid(selectedPlace: EatPlace? = null) {
             Button(
                 onClick = { selectionMode = SelectionMode.FINISH },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.DarkGray
+                    containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.Gray
                 ),modifier = Modifier.width(90.dp)
             ) {
                 Text("Финиш", fontSize = 10.sp)

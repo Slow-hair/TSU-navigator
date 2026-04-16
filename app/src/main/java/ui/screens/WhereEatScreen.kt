@@ -1,6 +1,8 @@
 package com.example.tsu_navigator.ui.screens
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,12 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
 import com.example.tsu_navigator.EatPlace
 import com.example.tsu_navigator.EatPlacesData
 import com.example.tsu_navigator.PlaceType
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.foundation.background
+
 fun isOpenNow(workingHours: String): Boolean {
     return try {
         val parts = workingHours.split("-")
@@ -37,12 +41,16 @@ fun isOpenNow(workingHours: String): Boolean {
         false
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WhereEatScreen(
     onPlaceSelected: (EatPlace) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     var selectedType by remember { mutableStateOf<PlaceType?>(null) }
+    var ratingTargetPlace by remember { mutableStateOf<EatPlace?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val filteredPlaces = remember(selectedType) {
         if (selectedType != null) {
@@ -104,7 +112,11 @@ fun WhereEatScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(filteredPlaces) { place ->
-                EatPlaceCard(place, onClick = { onPlaceSelected(place) })
+                EatPlaceCard(
+                    place = place,
+                    onShowOnMap = { onPlaceSelected(place) },
+                    onRate = { ratingTargetPlace = place }
+                )
             }
         }
 
@@ -117,57 +129,210 @@ fun WhereEatScreen(
             Text("бэкап")
         }
     }
+
+    if (ratingTargetPlace != null) {
+        ModalBottomSheet(
+            onDismissRequest = { ratingTargetPlace = null },
+            sheetState = sheetState
+        ) {
+            RatingDrawerContent(
+                placeName = ratingTargetPlace!!.name,
+                onConfirm = { rating ->
+                    println("Оценка для ${ratingTargetPlace!!.name}: $rating")
+                    ratingTargetPlace = null
+                },
+                onCancel = { ratingTargetPlace = null }
+            )
+        }
+    }
 }
 
 @Composable
-fun EatPlaceCard(place: EatPlace, onClick: () -> Unit) {
+fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
     val isOpen = remember(place.workingHours) { isOpenNow(place.workingHours) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(12.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "🍽️", fontSize = 32.sp, modifier = Modifier.padding(end = 12.dp))
 
-            Text(text = "🍽️", fontSize = 32.sp, modifier = Modifier.padding(end = 12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(place.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    place.cuisine?.let { Text(it, fontSize = 14.sp, color = Color.Gray) }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(place.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                place.cuisine?.let { Text(it, fontSize = 14.sp, color = Color.Gray) }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .then(
-                                if (isOpen) Modifier.background(Color(0xFF2E7D32), shape = RoundedCornerShape(5.dp))
-                                else Modifier.background(Color.Red, shape = RoundedCornerShape(5.dp))
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isOpen) "Открыто сейчас" else "Закрыто сейчас",
-                        fontSize = 12.sp,
-                        color = if (isOpen) Color(0xFF2E7D32) else Color.Red,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "  •  🕐 ${place.workingHours}",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .then(
+                                    if (isOpen) Modifier.background(Color(0xFF2E7D32), shape = RoundedCornerShape(5.dp))
+                                    else Modifier.background(Color.Red, shape = RoundedCornerShape(5.dp))
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isOpen) "Открыто сейчас" else "Закрыто сейчас",
+                            fontSize = 12.sp,
+                            color = if (isOpen) Color(0xFF2E7D32) else Color.Red,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "  •  🕐 ${place.workingHours}",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
             }
 
-            Text("→", fontSize = 20.sp, color = Color.Gray)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("★", color = Color(0xFFFFD700), fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("200 хе)", fontWeight = FontWeight.Bold)
+                }
+
+                Row {
+                    TextButton(
+                        onClick = onShowOnMap,
+                        modifier = Modifier.padding(end = 4.dp)
+                    ) {
+                        Text("На карте")
+                    }
+                    Button(
+                        onClick = onRate,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE)),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text("Оценить", fontSize = 12.sp)
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun RatingDrawerContent(
+    placeName: String,
+    onConfirm: (Int) -> Unit,
+    onCancel: () -> Unit
+) {
+    val gridSize = 5
+    val pixels = remember { Array(gridSize) { BooleanArray(gridSize) } }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Оцените \"$placeName\"",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Text(
+            "Нарисуйте цифру от 0 до 9",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .size(280.dp)
+                .background(Color.LightGray)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        val position = change.position
+                        val cellSize = size.width / gridSize
+                        val col = (position.x / cellSize).toInt().coerceIn(0, gridSize - 1)
+                        val row = (position.y / cellSize).toInt().coerceIn(0, gridSize - 1)
+                        pixels[row][col] = true
+                    }
+                }
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val cellSize = size.width / gridSize
+                for (row in 0 until gridSize) {
+                    for (col in 0 until gridSize) {
+                        if (pixels[row][col]) {
+                            drawRect(
+                                color = Color.Black,
+                                topLeft = Offset(col * cellSize, row * cellSize),
+                                size = androidx.compose.ui.geometry.Size(cellSize, cellSize)
+                            )
+                        }
+                    }
+                }
+                for (i in 0..gridSize) {
+                    val coord = i * cellSize
+                    drawLine(
+                        color = Color.Gray,
+                        start = Offset(coord, 0f),
+                        end = Offset(coord, size.height),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = Color.Gray,
+                        start = Offset(0f, coord),
+                        end = Offset(size.width, coord),
+                        strokeWidth = 2f
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    for (row in 0 until gridSize) {
+                        for (col in 0 until gridSize) {
+                            pixels[row][col] = false
+                        }
+                    }
+                }
+            ) {
+                Text("Очистить")
+            }
+
+            Button(
+                onClick = {
+                    val flatPixels = pixels.flatMap { it.toList() }.map { if (it) 1 else 0 }
+                    println("пиксели: ${flatPixels.joinToString("")}")
+                    onConfirm(200)
+                }
+            ) {
+                Text("Распознать")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Отмена")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
