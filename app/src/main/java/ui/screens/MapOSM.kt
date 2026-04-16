@@ -40,10 +40,14 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import com.example.tsu_navigator.EatPlace
 import com.example.tsu_navigator.EatPlacesData
 import kotlinx.coroutines.delay
+import com.example.tsu_navigator.ui.screens.CoworkingSpace
 enum class SelectionMode { NONE, START, FINISH }
 
 @Composable
-fun Grid(selectedPlace: EatPlace? = null) {
+fun Grid(
+    selectedPlace: EatPlace? = null,
+    selectedCoworking: CoworkingSpace? = null
+) {
     val context = LocalContext.current
 
     var navigationGrid by remember { mutableStateOf<Array<IntArray>?>(null) }
@@ -93,7 +97,8 @@ fun Grid(selectedPlace: EatPlace? = null) {
             onEndPointChange = { endPoint = it },
             selectionMode = selectionMode,
             onSelectionModeChange = { selectionMode = it },
-            selectedPlace = selectedPlace
+            selectedPlace = selectedPlace,
+            selectedCoworking = selectedCoworking
         )
         Row(
             modifier = Modifier
@@ -188,7 +193,8 @@ fun MapViewWithGrid(
     onEndPointChange: (GeoPoint?) -> Unit,
     selectionMode: SelectionMode,
     onSelectionModeChange: (SelectionMode) -> Unit,
-    selectedPlace: EatPlace? = null
+    selectedPlace: EatPlace? = null,
+    selectedCoworking: CoworkingSpace? = null
 ) {
     Configuration.getInstance().load(
         context,
@@ -235,6 +241,35 @@ fun MapViewWithGrid(
             mapView.overlays.add(marker)
             mapView.invalidate()
             println("маркери ${mapView.overlays.size}")
+        }
+    }
+    LaunchedEffect(selectedCoworking) {
+        println("selectedCoworking: $selectedCoworking")
+        if (selectedCoworking != null) {
+            delay(500)
+
+            val oldCoworkingMarker = mapView.overlays.filter {
+                it is Marker && it.title != "Старт" && it.title != "Финиш" && it.title != selectedPlace?.name
+            }
+            mapView.overlays.removeAll(oldCoworkingMarker)
+
+            mapView.controller.animateTo(GeoPoint(
+                selectedCoworking.latitude,
+                selectedCoworking.longitude
+            ))
+            mapView.controller.setZoom(20.0)
+
+            val marker = Marker(mapView).apply {
+                position = GeoPoint(selectedCoworking.latitude, selectedCoworking.longitude)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = selectedCoworking.name
+                subDescription = "💻 Коворкинг"
+                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 150, 255))
+                showInfoWindow()
+            }
+            mapView.overlays.add(marker)
+            mapView.invalidate()
+            println("Маркер коворкинга")
         }
     }
     fun geoToIndex(lat: Double, lon: Double): Point? {
