@@ -232,10 +232,13 @@ fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
                     }
                     Button(
                         onClick = onRate,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF0039A6),
+                            contentColor = Color.White
+                        ),
                         modifier = Modifier.height(36.dp)
                     ) {
-                        Text("Оценить", fontSize = 12.sp)
+                        Text("Оценить", fontSize = 12.sp, color = Color.White)
                     }
                 }
             }

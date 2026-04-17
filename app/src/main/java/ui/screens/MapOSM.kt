@@ -129,9 +129,14 @@ fun Grid(
                     startPoint = null
                     endPoint = null
                     selectionMode = SelectionMode.NONE
-                },modifier = Modifier.width(90.dp)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ComposeColor(0xFF0039A6),
+                    contentColor = ComposeColor.White
+                ),
+                modifier = Modifier.width(90.dp)
             ) {
-                Text("Сброс", fontSize = 10.sp)
+                Text("Сброс", fontSize = 10.sp, color = ComposeColor.White)
             }
         }
     }
@@ -235,7 +240,7 @@ fun MapViewWithGrid(
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = selectedPlace.name
                 subDescription = "🕐 ${selectedPlace.workingHours}"
-                icon = createCircleMarker(context, android.graphics.Color.RED)
+                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 57, 166))
                 showInfoWindow()
             }
             mapView.overlays.add(marker)
@@ -263,7 +268,6 @@ fun MapViewWithGrid(
                 position = GeoPoint(selectedCoworking.latitude, selectedCoworking.longitude)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = selectedCoworking.name
-                subDescription = "💻 Коворкинг"
                 icon = createCircleMarker(context, android.graphics.Color.rgb(0, 150, 255))
                 showInfoWindow()
             }
@@ -343,7 +347,7 @@ fun MapViewWithGrid(
                 position = it
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = "Старт"
-                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 150, 255))
+                icon = createCircleMarker(context, android.graphics.Color.GREEN)
                 mapView.overlays.add(this)
             }
         }
@@ -352,7 +356,7 @@ fun MapViewWithGrid(
                 position = it
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = "Финиш"
-                icon = createCircleMarker(context, android.graphics.Color.rgb(0, 200, 0))
+                icon = createCircleMarker(context, android.graphics.Color.RED)
                 mapView.overlays.add(this)
             }
         }
@@ -404,7 +408,7 @@ fun MapViewWithGrid(
         ) {
             Button(
                 onClick = { mapView.controller.zoomIn() },
-                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor.DarkGray),
+                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor(0xFF0039A6)),
                 modifier = Modifier.size(48.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
@@ -413,7 +417,7 @@ fun MapViewWithGrid(
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { mapView.controller.zoomOut() },
-                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor.DarkGray),
+                colors = ButtonDefaults.buttonColors(containerColor = ComposeColor(0xFF0039A6)),
                 modifier = Modifier.size(48.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {

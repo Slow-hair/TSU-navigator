@@ -99,9 +99,9 @@ enum class AppDestinations(
     val label: String,
     val icon: Int,
 ) {
-    MAP("Карта", R.drawable.ic_home),
-    EAT("Где поесть", R.drawable.ic_favorite),
-    COWORKING("Коворкинг", R.drawable.ic_account_box),
+    MAP("Карта", R.drawable.ic_map),
+    EAT("Где поесть", R.drawable.baseline_fastfood_24),
+    COWORKING("Коворкинг", R.drawable.baseline_chair_24),
 }
 
 @Composable

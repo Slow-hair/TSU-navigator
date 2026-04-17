@@ -40,7 +40,7 @@ fun CoworkingScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "💻 Коворкинги",
+            text = "Коворкинги",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -56,11 +56,15 @@ fun CoworkingScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedButton(
+        Button(
             onClick = onBack,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF0039A6),
+                contentColor = Color.White
+            ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Назад")
+            Text("Назад", color = Color.White)
         }
     }
 }
