@@ -68,7 +68,8 @@ fun WhereEatScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            .padding(top = 40.dp)
     ) {
         Column {
             Text(
@@ -98,22 +99,22 @@ fun WhereEatScreen(
             FilterChip(
                 selected = selectedType == null,
                 onClick = { selectedType = null },
-                label = { Text(stringResource(R.string.filter_all)) }
+                label = { Text(stringResource(R.string.filter_all), fontSize = 10.sp) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.CAFE,
                 onClick = { selectedType = PlaceType.CAFE },
-                label = { Text(stringResource(R.string.filter_cafe)) }
+                label = { Text(stringResource(R.string.filter_cafe), fontSize = 10.sp) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.CANTEEN,
                 onClick = { selectedType = PlaceType.CANTEEN },
-                label = { Text(stringResource(R.string.filter_canteen)) }
+                label = { Text(stringResource(R.string.filter_canteen), fontSize = 10.sp) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.SHOP,
                 onClick = { selectedType = PlaceType.SHOP },
-                label = { Text(stringResource(R.string.filter_shop)) }
+                label = { Text(stringResource(R.string.filter_shop), fontSize = 10.sp) }
             )
         }
 
@@ -279,9 +280,18 @@ fun RatingDrawerContent(
     val context = LocalContext.current
     val aiClassifier = remember { AIClassifier(context) }
     val gridSize = 5
-    val pixels = remember { Array(gridSize) { BooleanArray(gridSize) } }
+
+    var pixels by remember { mutableStateOf(List(25) { false }) }
 
     var recognizedDigit by remember { mutableStateOf<Int?>(null) }
+
+    fun setPixel(index: Int, value: Boolean) {
+        pixels = pixels.toMutableList().apply { set(index, value) }
+    }
+
+    fun clearPixels() {
+        pixels = List(25) { false }
+    }
 
     Column(
         modifier = Modifier
@@ -309,7 +319,10 @@ fun RatingDrawerContent(
                         val cellSize = size.width / gridSize
                         val col = (position.x / cellSize).toInt().coerceIn(0, gridSize - 1)
                         val row = (position.y / cellSize).toInt().coerceIn(0, gridSize - 1)
-                        pixels[row][col] = true
+                        val index = row * gridSize + col
+                        if (!pixels[index]) {
+                            setPixel(index, true)
+                        }
                     }
                 }
         ) {
@@ -317,7 +330,8 @@ fun RatingDrawerContent(
                 val cellSize = size.width / gridSize
                 for (row in 0 until gridSize) {
                     for (col in 0 until gridSize) {
-                        if (pixels[row][col]) {
+                        val index = row * gridSize + col
+                        if (pixels[index]) {
                             drawRect(
                                 color = Color.Black,
                                 topLeft = Offset(col * cellSize, row * cellSize),
@@ -351,19 +365,18 @@ fun RatingDrawerContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = {
-                        for (row in 0 until gridSize) {
-                            for (col in 0 until gridSize) {
-                                pixels[row][col] = false
-                            }
-                        }
-                    }
+                    onClick = { clearPixels() }
                 ) {
                     Text(stringResource(R.string.clear))
                 }
                 Button(
                     onClick = {
-                        val predicted = aiClassifier.predict(pixels)
+                        val pixelArray = Array(gridSize) { row ->
+                            BooleanArray(gridSize) { col ->
+                                pixels[row * gridSize + col]
+                            }
+                        }
+                        val predicted = aiClassifier.predict(pixelArray)
                         recognizedDigit = predicted
                     }
                 ) {

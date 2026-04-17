@@ -114,7 +114,7 @@ fun Grid(
                 ), modifier = Modifier.width(90.dp)
 
             ) {
-                Text(stringResource(R.string.start), fontSize = 12.sp)
+                Text(stringResource(R.string.start), fontSize = 10.sp)
             }
             Spacer(modifier = Modifier.width(5.dp))
             Button(
@@ -123,7 +123,7 @@ fun Grid(
                     containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.DarkGray
                 ), modifier = Modifier.width(90.dp)
             ) {
-                Text(stringResource(R.string.finish), fontSize = 12.sp)
+                Text(stringResource(R.string.finish), fontSize = 10.sp)
             }
             Spacer(modifier = Modifier.width(5.dp))
             Button(
