@@ -79,7 +79,10 @@ class AIClassifier(private val context: Context) {
 
         val probs = softmax(output)
         val predicted = probs.indices.maxByOrNull { probs[it] } ?: 0
-        Log.d("AIClassifier", "Вероятности: ${probs.joinToString { "%.2f".format(it) }} -> $predicted")
+        Log.d(
+            "AIClassifier",
+            "Вероятности: ${probs.joinToString { "%.2f".format(it) }} -> $predicted"
+        )
         return predicted
     }
 

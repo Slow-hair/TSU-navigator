@@ -1,3 +1,39 @@
 <resources>
-    <string name="app_name">TSU navigator</string>
+    <string name="app_name" translatable="false">TSU Navigator</string>
+
+    <!-- новигация -->
+    <string name="nav_map">Карта</string>
+    <string name="nav_eat">Где поесть</string>
+    <string name="nav_coworking">Коворкинг</string>
+
+    <!-- карта -->
+    <string name="start">Старт</string>
+    <string name="finish">Финиш</string>
+    <string name="reset">Сброс</string>
+
+    <!-- где поесть -->
+    <string name="where_to_eat">Где поесть?</string>
+    <string name="filter_all">Все</string>
+    <string name="filter_cafe">Кафе</string>
+    <string name="filter_canteen">Столовые</string>
+    <string name="filter_shop">Магазины</string>
+    <string name="places_count">Накидали подходящих вариков: %d</string>
+    <string name="open_now">Открыто сейчас</string>
+    <string name="closed_now">Закрыто сейчас</string>
+    <string name="show_on_map">На карте</string>
+    <string name="rate">Оценить</string>
+    <string name="back">Назад</string>
+
+    <!-- оценочки -->
+    <string name="rate_place">Оцените \"%s\"</string>
+    <string name="draw_digit">Нарисуйте цифру от 0 до 9</string>
+    <string name="clear">Очистить</string>
+    <string name="recognize">Распознать</string>
+    <string name="recognized_digit">Распознанная цифра: %d</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="change">Изменить</string>
+    <string name="cancel">Отмена</string>
+
+    <!-- чил-зон -->
+    <string name="coworking_title">Коворкинги</string>
 </resources>

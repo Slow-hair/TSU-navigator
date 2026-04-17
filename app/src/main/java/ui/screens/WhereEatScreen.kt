@@ -15,12 +15,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tsu_navigator.EatPlace
 import com.example.tsu_navigator.EatPlacesData
 import com.example.tsu_navigator.PlaceType
+import com.example.tsu_navigator.R
 import com.example.tsu_navigator.RatingRepository
 import com.example.tsu_navigator.ml.AIClassifier
 import java.time.LocalTime
@@ -70,7 +72,7 @@ fun WhereEatScreen(
     ) {
         Column {
             Text(
-                text = "Где поесть?",
+                text = stringResource(R.string.where_to_eat),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -96,29 +98,29 @@ fun WhereEatScreen(
             FilterChip(
                 selected = selectedType == null,
                 onClick = { selectedType = null },
-                label = { Text("Все") }
+                label = { Text(stringResource(R.string.filter_all)) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.CAFE,
                 onClick = { selectedType = PlaceType.CAFE },
-                label = { Text("Кафе") }
+                label = { Text(stringResource(R.string.filter_cafe)) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.CANTEEN,
                 onClick = { selectedType = PlaceType.CANTEEN },
-                label = { Text("Столовые") }
+                label = { Text(stringResource(R.string.filter_canteen)) }
             )
             FilterChip(
                 selected = selectedType == PlaceType.SHOP,
                 onClick = { selectedType = PlaceType.SHOP },
-                label = { Text("Магазины") }
+                label = { Text(stringResource(R.string.filter_shop)) }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Накидали подходящих вариков: ${filteredPlaces.size}",
+            text = stringResource(R.string.places_count, filteredPlaces.size),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -143,7 +145,7 @@ fun WhereEatScreen(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("бэкап")
+            Text(stringResource(R.string.back))
         }
     }
 
@@ -194,13 +196,21 @@ fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
                             modifier = Modifier
                                 .size(10.dp)
                                 .then(
-                                    if (isOpen) Modifier.background(Color(0xFF2E7D32), shape = RoundedCornerShape(5.dp))
-                                    else Modifier.background(Color.Red, shape = RoundedCornerShape(5.dp))
+                                    if (isOpen) Modifier.background(
+                                        Color(0xFF2E7D32),
+                                        shape = RoundedCornerShape(5.dp)
+                                    )
+                                    else Modifier.background(
+                                        Color.Red,
+                                        shape = RoundedCornerShape(5.dp)
+                                    )
                                 )
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = if (isOpen) "Открыто сейчас" else "Закрыто сейчас",
+                            text = if (isOpen) stringResource(R.string.open_now) else stringResource(
+                                R.string.closed_now
+                            ),
                             fontSize = 12.sp,
                             color = if (isOpen) Color(0xFF2E7D32) else Color.Red,
                             fontWeight = FontWeight.Medium
@@ -242,7 +252,7 @@ fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
                         onClick = onShowOnMap,
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
-                        Text("На карте")
+                        Text(stringResource(R.string.show_on_map))
                     }
                     Button(
                         onClick = onRate,
@@ -252,7 +262,7 @@ fun EatPlaceCard(place: EatPlace, onShowOnMap: () -> Unit, onRate: () -> Unit) {
                         ),
                         modifier = Modifier.height(36.dp)
                     ) {
-                        Text("Оценить", fontSize = 12.sp, color = Color.White)
+                        Text(stringResource(R.string.rate), fontSize = 12.sp, color = Color.White)
                     }
                 }
             }
@@ -280,11 +290,11 @@ fun RatingDrawerContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Оцените \"$placeName\"",
+            text = stringResource(R.string.rate_place, placeName),
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "Нарисуйте цифру от 0 до 9",
+            stringResource(R.string.draw_digit),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -349,7 +359,7 @@ fun RatingDrawerContent(
                         }
                     }
                 ) {
-                    Text("Очистить")
+                    Text(stringResource(R.string.clear))
                 }
                 Button(
                     onClick = {
@@ -357,7 +367,7 @@ fun RatingDrawerContent(
                         recognizedDigit = predicted
                     }
                 ) {
-                    Text("Распознать")
+                    Text(stringResource(R.string.recognize))
                 }
             }
         } else {
@@ -365,7 +375,7 @@ fun RatingDrawerContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Распознанная цифра: $recognizedDigit",
+                    text = stringResource(R.string.recognized_digit, recognizedDigit!!),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -378,14 +388,14 @@ fun RatingDrawerContent(
                             recognizedDigit = null
                         }
                     ) {
-                        Text("Подтвердить")
+                        Text(stringResource(R.string.confirm))
                     }
                     OutlinedButton(
                         onClick = {
                             recognizedDigit = null
                         }
                     ) {
-                        Text("Изменить")
+                        Text(stringResource(R.string.change))
                     }
                 }
             }
@@ -397,7 +407,7 @@ fun RatingDrawerContent(
             onClick = onCancel,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Отмена")
+            Text(stringResource(R.string.cancel))
         }
 
         Spacer(modifier = Modifier.height(8.dp))

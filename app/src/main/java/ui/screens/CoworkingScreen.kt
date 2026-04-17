@@ -1,5 +1,6 @@
 package com.example.tsu_navigator.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,9 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.tsu_navigator.R
 
 data class CoworkingSpace(
     val id: String,
@@ -39,12 +42,26 @@ fun CoworkingScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Коворкинги",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Column {
+            Text(
+                text = stringResource(R.string.coworking_title),
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .height(3.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -64,7 +81,7 @@ fun CoworkingScreen(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Назад", color = Color.White)
+            Text(stringResource(R.string.back), color = Color.White)
         }
     }
 }

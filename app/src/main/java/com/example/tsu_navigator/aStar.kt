@@ -13,7 +13,8 @@ fun findPath(
     val height = grid.size
     val width = grid[0].size
 
-    fun heuristic(p: Point) = sqrt((p.x - finish.x).toDouble().pow(2) + (p.y - finish.y).toDouble().pow(2))
+    fun heuristic(p: Point) =
+        sqrt((p.x - finish.x).toDouble().pow(2) + (p.y - finish.y).toDouble().pow(2))
 
     val gScore = Array(height) { DoubleArray(width) { Double.POSITIVE_INFINITY } }
     gScore[start.y][start.x] = 0.0

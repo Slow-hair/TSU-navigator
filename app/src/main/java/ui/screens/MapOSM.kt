@@ -19,8 +19,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.tsu_navigator.Point
+import com.example.tsu_navigator.R
 import com.example.tsu_navigator.findPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,9 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color as ComposeColor
 import com.example.tsu_navigator.EatPlace
-import com.example.tsu_navigator.EatPlacesData
 import kotlinx.coroutines.delay
 import com.example.tsu_navigator.ui.screens.CoworkingSpace
+
 enum class SelectionMode { NONE, START, FINISH }
 
 @Composable
@@ -109,19 +111,19 @@ fun Grid(
                 onClick = { selectionMode = SelectionMode.START },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.DarkGray
-                ),modifier = Modifier.width(90.dp)
+                ), modifier = Modifier.width(90.dp)
 
             ) {
-                Text("Старт", fontSize = 10.sp)
+                Text(stringResource(R.string.start), fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.width(5.dp))
             Button(
                 onClick = { selectionMode = SelectionMode.FINISH },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.DarkGray
-                ),modifier = Modifier.width(90.dp)
+                ), modifier = Modifier.width(90.dp)
             ) {
-                Text("Финиш", fontSize = 10.sp)
+                Text(stringResource(R.string.finish), fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.width(5.dp))
             Button(
@@ -136,7 +138,7 @@ fun Grid(
                 ),
                 modifier = Modifier.width(90.dp)
             ) {
-                Text("Сброс", fontSize = 10.sp, color = ComposeColor.White)
+                Text(stringResource(R.string.reset), fontSize = 12.sp, color = ComposeColor.White)
             }
         }
     }
@@ -144,7 +146,8 @@ fun Grid(
 
 private fun loadGridFromAssets(context: Context): Array<IntArray>? {
     return try {
-        val jsonString = context.assets.open("walkability_grid.json").bufferedReader().use { it.readText() }
+        val jsonString =
+            context.assets.open("walkability_grid.json").bufferedReader().use { it.readText() }
         val json = JSONObject(jsonString)
         val rows = json.getInt("rows")
         val cols = json.getInt("cols")
@@ -229,10 +232,12 @@ fun MapViewWithGrid(
             }
             mapView.overlays.removeAll(oldPlaceMarker)
 
-            mapView.controller.animateTo(GeoPoint(
-                selectedPlace.latitude,
-                selectedPlace.longitude
-            ))
+            mapView.controller.animateTo(
+                GeoPoint(
+                    selectedPlace.latitude,
+                    selectedPlace.longitude
+                )
+            )
             mapView.controller.setZoom(20.0)
 
             val marker = Marker(mapView).apply {
@@ -258,10 +263,12 @@ fun MapViewWithGrid(
             }
             mapView.overlays.removeAll(oldCoworkingMarker)
 
-            mapView.controller.animateTo(GeoPoint(
-                selectedCoworking.latitude,
-                selectedCoworking.longitude
-            ))
+            mapView.controller.animateTo(
+                GeoPoint(
+                    selectedCoworking.latitude,
+                    selectedCoworking.longitude
+                )
+            )
             mapView.controller.setZoom(20.0)
 
             val marker = Marker(mapView).apply {
@@ -310,7 +317,7 @@ fun MapViewWithGrid(
         val start = startPoint
         val end = endPoint
         if (grid == null || start == null || end == null) {
-            println("данные не готовы")
+            println("не готово")
             return
         }
         val startIdxRaw = geoToIndex(start.latitude, start.longitude) ?: return
@@ -323,10 +330,10 @@ fun MapViewWithGrid(
 
         val pathIndices = findPath(grid, startIdx, endIdx)
         if (pathIndices == null) {
-            println("Путь не найден")
+            println("нет пути")
             return
         }
-        println("Путь найден точек ${pathIndices.size}")
+        println("Путь найден ${pathIndices.size}")
 
         val geoPath = pathIndices.map { indexToGeo(it.x, it.y) }
 
@@ -367,7 +374,7 @@ fun MapViewWithGrid(
         updateMarkers()
         if (startPoint != null && endPoint != null) {
             buildAndShowRoute()
-        }else {
+        } else {
             mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Polyline>())
             mapView.invalidate()
         }
@@ -386,12 +393,14 @@ fun MapViewWithGrid(
                     mapView.invalidate()
                     mapView.performClick()
                 }
+
                 SelectionMode.FINISH -> {
                     onEndPointChange(geoPoint)
                     onSelectionModeChange(SelectionMode.NONE)
                     mapView.performClick()
                 }
-                SelectionMode.NONE -> { }
+
+                SelectionMode.NONE -> {}
             }
         }
         false
