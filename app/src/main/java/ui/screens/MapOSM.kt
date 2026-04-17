@@ -108,7 +108,7 @@ fun Grid(
             Button(
                 onClick = { selectionMode = SelectionMode.START },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.Gray
+                    containerColor = if (selectionMode == SelectionMode.START) ComposeColor.Green else ComposeColor.DarkGray
                 ),modifier = Modifier.width(90.dp)
 
             ) {
@@ -118,7 +118,7 @@ fun Grid(
             Button(
                 onClick = { selectionMode = SelectionMode.FINISH },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.Gray
+                    containerColor = if (selectionMode == SelectionMode.FINISH) ComposeColor.Red else ComposeColor.DarkGray
                 ),modifier = Modifier.width(90.dp)
             ) {
                 Text("Финиш", fontSize = 10.sp)

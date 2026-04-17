@@ -68,12 +68,26 @@ fun WhereEatScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Где поесть???",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Column {
+            Text(
+                text = "Где поесть?",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .height(3.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
